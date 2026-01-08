@@ -5,7 +5,7 @@
   "types": "./src/index.ts",
   "dependencies": {
     "mongoose": "^8.0.0",
-    "@studymate/shared": "workspace:*"
+    "@studymate/shared": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

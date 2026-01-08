@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -10,7 +14,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -18,16 +22,41 @@
       }
     ],
     "paths": {
-      "@/*": ["./app/*"],
-      "@/components/*": ["./components/*"],
-      "@/lib/*": ["./lib/*"],
-      "@/hooks/*": ["./hooks/*"],
-      "@studymate/shared": ["./packages/shared/src/index.ts"],
-      "@studymate/db": ["./packages/db/src/index.ts"],
-      "@studymate/ai": ["./packages/ai/src/index.ts"],
-      "@studymate/notion": ["./packages/notion/src/index.ts"]
-    }
+      "@/*": [
+        "./app/*"
+      ],
+      "@/components/*": [
+        "./components/*"
+      ],
+      "@/lib/*": [
+        "./lib/*"
+      ],
+      "@/hooks/*": [
+        "./hooks/*"
+      ],
+      "@studymate/shared": [
+        "./packages/shared/src/index.ts"
+      ],
+      "@studymate/db": [
+        "./packages/db/src/index.ts"
+      ],
+      "@studymate/ai": [
+        "./packages/ai/src/index.ts"
+      ],
+      "@studymate/notion": [
+        "./packages/notion/src/index.ts"
+      ]
+    },
+    "target": "ES2017"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

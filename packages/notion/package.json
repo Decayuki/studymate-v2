@@ -6,7 +6,7 @@
   "dependencies": {
     "@notionhq/client": "^2.0.0",
     "p-queue": "^8.0.0",
-    "@studymate/shared": "workspace:*"
+    "@studymate/shared": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

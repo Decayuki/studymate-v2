@@ -6,7 +6,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
     "@anthropic-ai/sdk": "^0.32.0",
-    "@studymate/shared": "workspace:*"
+    "@studymate/shared": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
