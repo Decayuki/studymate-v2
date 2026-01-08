@@ -3,5 +3,8 @@
 // Database types (Subject, Content, ContentTemplate, etc.)
 export * from './database';
 
-// API types (will be added in Epic 1 Story 1.3)
-// export * from './api';
+// API types
+export * from './api';
+
+// AI types
+export * from './ai';
