@@ -30,9 +30,9 @@ export class GeminiService extends AIService {
 
     this.client = new GoogleGenerativeAI(apiKey);
 
-    // Use gemini-pro model
+    // Use gemini-2.5-pro (stable, 1M token context window)
     this.model = this.client.getGenerativeModel({
-      model: 'gemini-pro',
+      model: 'models/gemini-2.5-pro',
     });
   }
 
@@ -115,7 +115,7 @@ export class GeminiService extends AIService {
     return {
       content: text,
       model: 'gemini',
-      modelVersion: 'gemini-pro',
+      modelVersion: 'gemini-2.5-pro',
       tokensUsed,
       durationMs: 0, // Will be calculated by caller
       finishReason,
@@ -135,7 +135,7 @@ export class GeminiService extends AIService {
     try {
       const result = await this.model.generateContent({
         contents: [{ role: 'user', parts: [{ text: 'Hello' }] }],
-        generationConfig: { maxOutputTokens: 10 },
+        generationConfig: { maxOutputTokens: 100 }, // Increased for Gemini 2.5 Pro reasoning
       });
 
       return !!result.response.text();
