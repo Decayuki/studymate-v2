@@ -47,45 +47,47 @@ export default function HomePage() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
+      let currentSubjects: ISubject[] = [];
+
       // Charger les matières
       const subjectsResponse = await fetch('/api/subjects');
       if (subjectsResponse.ok) {
         const subjectsData = await subjectsResponse.json();
-        const filteredSubjects = (subjectsData.data || []).filter(
+        currentSubjects = (subjectsData.data || []).filter(
           (s: ISubject) => s.level === selectedLevel
         );
-        setSubjects(filteredSubjects);
+        setSubjects(currentSubjects);
       }
 
       // Charger les stats de contenu
       const statsResponse = await fetch(`/api/contents/all?level=${selectedLevel}&limit=5`);
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
-        const contents = statsData.data.contents || [];
-        
+        const contents = statsData.data?.contents || [];
+
         // Calculer les statistiques
         const contentStats: ContentStats = {
-          total: statsData.data.pagination.total || 0,
-          published: contents.filter((c: any) => c.primaryStatus === 'published').length,
-          draft: contents.filter((c: any) => c.primaryStatus === 'draft').length,
+          total: statsData.data?.pagination?.total || 0,
+          published: Array.isArray(contents) ? contents.filter((c: any) => c.primaryStatus === 'published').length : 0,
+          draft: Array.isArray(contents) ? contents.filter((c: any) => c.primaryStatus === 'draft').length : 0,
           byType: {
-            course: contents.filter((c: any) => c.type === 'course').length,
-            td: contents.filter((c: any) => c.type === 'td').length,
-            control: contents.filter((c: any) => c.type === 'control').length,
+            course: Array.isArray(contents) ? contents.filter((c: any) => c.type === 'course').length : 0,
+            td: Array.isArray(contents) ? contents.filter((c: any) => c.type === 'td').length : 0,
+            control: Array.isArray(contents) ? contents.filter((c: any) => c.type === 'control').length : 0,
           }
         };
 
         setStats({
-          subjects: filteredSubjects.length,
+          subjects: currentSubjects.length,
           contents: contentStats,
-          recentActivity: contents.slice(0, 5).map((c: any) => ({
+          recentActivity: Array.isArray(contents) ? contents.slice(0, 5).map((c: any) => ({
             _id: c._id,
             title: c.title,
             type: c.type,
-            subject: c.subject.name,
+            subject: c.subject?.name || 'Unknown',
             updatedAt: c.updatedAt,
             status: c.primaryStatus,
-          }))
+          })) : []
         });
       }
     } catch (error) {
@@ -165,7 +167,7 @@ export default function HomePage() {
               Bienvenue sur StudyMate
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-              Créez du contenu pédagogique de qualité avec l'aide de l'IA. 
+              Créez du contenu pédagogique de qualité avec l'aide de l'IA.
               Cours, TDs et contrôles générés par Gemini et Claude.
             </p>
 
@@ -173,21 +175,19 @@ export default function HomePage() {
             <div className="inline-flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setSelectedLevel('lycee')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  selectedLevel === 'lycee'
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${selectedLevel === 'lycee'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 🏫 Lycée
               </button>
               <button
                 onClick={() => setSelectedLevel('superieur')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  selectedLevel === 'superieur'
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${selectedLevel === 'superieur'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 🎓 Enseignement Supérieur
               </button>

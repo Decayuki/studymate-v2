@@ -18,8 +18,8 @@ interface ContentFilters {
   search?: string;
   sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'subject';
   sortOrder?: 'asc' | 'desc';
-  limit?: number;
-  offset?: number;
+  limit: number;
+  offset: number;
 }
 
 /**
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     const { searchParams } = new URL(request.url);
-    
+
     // Parse query parameters
     const filters: ContentFilters = {
       level: searchParams.get('level') as EducationLevel || undefined,
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by subjects
     if (filters.subjects && filters.subjects.length > 0) {
-      matchConditions.subject = { 
+      matchConditions.subject = {
         $in: filters.subjects.map(id => {
           try {
             return require('mongoose').Types.ObjectId(id);
@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
     // Filter by status (after computing status from versions)
     if (filters.statuses && filters.statuses.length > 0) {
       const statusMatch: any = {};
-      
+
       filters.statuses.forEach(status => {
         if (status === 'published') {
           statusMatch['publishedVersion'] = { $ne: null };

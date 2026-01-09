@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model, Types } from 'mongoose';
-import type { 
-  IContent, 
-  IContentVersion, 
+import type {
+  IContent,
+  IContentVersion,
   IContentSpecifications,
   ICourseSpecifications,
   ITDSpecifications,
@@ -258,14 +258,14 @@ ContentSchema.virtual('activeVersion').get(function () {
  * Get all draft versions
  */
 ContentSchema.virtual('draftVersions').get(function () {
-  return this.versions.filter((v) => v.status === 'draft');
+  return this.versions.filter((v: IContentVersion) => v.status === 'draft');
 });
 
 /**
  * Get published version
  */
 ContentSchema.virtual('publishedVersion').get(function () {
-  return this.versions.find((v) => v.status === 'published') || null;
+  return this.versions.find((v: IContentVersion) => v.status === 'published') || null;
 });
 
 // ============================================================================
@@ -302,7 +302,7 @@ ContentSchema.methods.addVersion = function (
 ContentSchema.methods.getVersion = function (
   versionNumber: number
 ): IContentVersion | null {
-  return this.versions.find((v) => v.versionNumber === versionNumber) || null;
+  return this.versions.find((v: IContentVersion) => v.versionNumber === versionNumber) || null;
 };
 
 /**
@@ -312,7 +312,7 @@ ContentSchema.methods.publishVersion = function (
   versionNumber: number
 ): void {
   const versionIndex = this.versions.findIndex(
-    (v) => v.versionNumber === versionNumber
+    (v: IContentVersion) => v.versionNumber === versionNumber
   );
 
   if (versionIndex === -1) {
@@ -320,7 +320,7 @@ ContentSchema.methods.publishVersion = function (
   }
 
   // Unpublish any previously published version
-  this.versions.forEach((v) => {
+  this.versions.forEach((v: IContentVersion) => {
     if (v.status === 'published') {
       v.status = 'draft';
     }
@@ -340,7 +340,7 @@ ContentSchema.methods.rejectVersion = function (
   reason?: string
 ): void {
   const versionIndex = this.versions.findIndex(
-    (v) => v.versionNumber === versionNumber
+    (v: IContentVersion) => v.versionNumber === versionNumber
   );
 
   if (versionIndex === -1) {
@@ -361,7 +361,7 @@ ContentSchema.methods.setComparingStatus = function (
   versionNumber: number
 ): void {
   const versionIndex = this.versions.findIndex(
-    (v) => v.versionNumber === versionNumber
+    (v: IContentVersion) => v.versionNumber === versionNumber
   );
 
   if (versionIndex === -1) {
@@ -377,15 +377,15 @@ ContentSchema.methods.setComparingStatus = function (
  */
 ContentSchema.methods.pruneVersions = function (keepCount: number = 5): void {
   const publishedVersions = this.versions.filter(
-    (v) => v.status === 'published'
+    (v: IContentVersion) => v.status === 'published'
   );
   const otherVersions = this.versions
-    .filter((v) => v.status !== 'published')
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .filter((v: IContentVersion) => v.status !== 'published')
+    .sort((a: IContentVersion, b: IContentVersion) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, keepCount);
 
   this.versions = [...publishedVersions, ...otherVersions].sort(
-    (a, b) => a.versionNumber - b.versionNumber
+    (a: IContentVersion, b: IContentVersion) => a.versionNumber - b.versionNumber
   );
 };
 

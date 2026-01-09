@@ -4,6 +4,7 @@ import type {
   AIRetryConfig,
   AIServiceStats,
   AIRateLimitInfo,
+  AIErrorType,
 } from '@studymate/shared';
 
 /**
@@ -12,7 +13,7 @@ import type {
  * This interface defines the contract for all AI service implementations.
  * Both GeminiService and ClaudeService implement this interface.
  */
-export abstract class AIService {
+export class AIService {
   protected apiKey: string;
   protected stats: AIServiceStats;
 
@@ -39,24 +40,30 @@ export abstract class AIService {
    * @param retryConfig - Optional retry configuration
    * @returns Promise with generated content and metadata
    */
-  abstract generate(
+  async generate(
     request: AIGenerationRequest,
     retryConfig?: Partial<AIRetryConfig>
-  ): Promise<AIGenerationResponse>;
+  ): Promise<AIGenerationResponse> {
+    throw new Error('Method not implemented.');
+  }
 
   /**
    * Check if the service is healthy and can make requests
    *
    * @returns Promise<boolean> indicating service health
    */
-  abstract healthCheck(): Promise<boolean>;
+  async healthCheck(): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
 
   /**
    * Get current rate limit information
    *
    * @returns Rate limit info if available
    */
-  abstract getRateLimitInfo(): AIRateLimitInfo | null;
+  getRateLimitInfo(): AIRateLimitInfo | null {
+    throw new Error('Method not implemented.');
+  }
 
   /**
    * Get service usage statistics
@@ -97,10 +104,8 @@ export abstract class AIService {
       this.stats.totalTokensUsed += tokensUsed;
     } else {
       this.stats.failedRequests++;
-      if (errorType) {
-        this.stats.errorsByType[errorType] =
-          (this.stats.errorsByType[errorType] || 0) + 1;
-      }
+      const key = errorType as AIErrorType;
+      this.stats.errorsByType[key] = (this.stats.errorsByType[key] || 0) + 1;
     }
 
     // Update average latency (running average)
@@ -146,10 +151,12 @@ export abstract class AIService {
   /**
    * Check if error is retryable based on config
    */
-  protected abstract isRetryableError(
+  protected isRetryableError(
     error: unknown,
     retryConfig: AIRetryConfig
-  ): boolean;
+  ): boolean {
+    throw new Error('Method not implemented.');
+  }
 
   /**
    * Sleep utility for retry delays

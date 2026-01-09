@@ -160,15 +160,12 @@ export interface AIServiceStats {
 // CONTENT GENERATION TYPES
 // ============================================================================
 
-/**
- * Content Type for generation
- */
-export type ContentType = 'course' | 'td' | 'control';
+import type { ContentType, EducationLevel } from './database';
 
 /**
- * Education Level
+ * Content Generation Context
+ * Used for generating TD/Control based on existing course
  */
-export type EducationLevel = 'lycee' | 'superieur';
 
 /**
  * Content Generation Context

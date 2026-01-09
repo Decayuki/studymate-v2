@@ -14,7 +14,7 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<ContentTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<ContentTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<ContentTemplate | null>(null);
-  
+
   const [filters, setFilters] = useState({
     type: 'all' as ContentType | 'all',
     level: 'all' as EducationLevel | 'all',
@@ -35,15 +35,15 @@ export default function TemplatesPage() {
     if (filters.type !== 'all') {
       filtered = filtered.filter(t => t.type === filters.type);
     }
-    
+
     if (filters.level !== 'all') {
       filtered = filtered.filter(t => t.level === filters.level);
     }
-    
+
     if (filters.category !== 'all') {
-      filtered = filtered.filter(t => t.categories.includes(filters.category));
+      filtered = filtered.filter(t => t.categories.includes(filters.category as SubjectCategory));
     }
-    
+
     if (filters.difficulty !== 'all') {
       filtered = filtered.filter(t => t.difficulty === filters.difficulty);
     }
@@ -100,7 +100,7 @@ export default function TemplatesPage() {
                 <span>←</span>
                 <span>Retour aux templates</span>
               </button>
-              
+
               <button
                 onClick={() => {
                   // Redirect to subject creation with this template pre-selected
@@ -125,7 +125,7 @@ export default function TemplatesPage() {
                   {selectedTemplate.name}
                 </h1>
                 <p className="text-gray-600 mb-4">{selectedTemplate.description}</p>
-                
+
                 <div className="flex items-center space-x-4 text-sm">
                   <span className={`px-3 py-1 rounded ${getDifficultyColor(selectedTemplate.difficulty)}`}>
                     {getDifficultyStars(selectedTemplate.difficulty)} {selectedTemplate.difficulty}

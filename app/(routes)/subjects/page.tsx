@@ -79,9 +79,10 @@ export default function SubjectsPage() {
       }
 
       const data = await response.json();
+      const subjects = Array.isArray(data.data) ? data.data : [];
       setState(prev => ({
         ...prev,
-        subjects: data.data || [],
+        subjects: subjects,
         loading: false,
       }));
     } catch (error) {
@@ -140,9 +141,11 @@ export default function SubjectsPage() {
   // Get unique institutions for filter
   const institutions = Array.from(
     new Set(
-      state.subjects
-        .filter(s => s.higherEducationContext?.institution)
-        .map(s => s.higherEducationContext!.institution)
+      Array.isArray(state.subjects) 
+        ? state.subjects
+            .filter(s => s.higherEducationContext?.institution)
+            .map(s => s.higherEducationContext!.institution)
+        : []
     )
   );
 
@@ -155,7 +158,7 @@ export default function SubjectsPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Gestion des matières</h1>
               <p className="text-sm text-gray-600 mt-1">
-                Organisez vos matières par niveau et établissement • {state.subjects.length} matière(s)
+                Organisez vos matières par niveau et établissement • {Array.isArray(state.subjects) ? state.subjects.length : 0} matière(s)
               </p>
             </div>
             
@@ -279,7 +282,7 @@ export default function SubjectsPage() {
         )}
 
         {/* Empty State */}
-        {!state.loading && !state.error && state.subjects.length === 0 && (
+        {!state.loading && !state.error && (!Array.isArray(state.subjects) || state.subjects.length === 0) && (
           <div className="bg-white rounded-lg border p-12 text-center">
             <div className="text-4xl mb-4">📚</div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune matière trouvée</h3>
@@ -296,7 +299,7 @@ export default function SubjectsPage() {
         )}
 
         {/* Subjects Grid */}
-        {!state.loading && !state.error && state.subjects.length > 0 && (
+        {!state.loading && !state.error && Array.isArray(state.subjects) && state.subjects.length > 0 && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {state.subjects.map((subject) => (
               <div key={subject._id.toString()} className="bg-white rounded-lg border hover:shadow-md transition-shadow">

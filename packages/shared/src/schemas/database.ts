@@ -55,24 +55,21 @@ export const CreateSubjectSchema = z.object({
     errorMap: () => ({ message: 'Invalid subject category' }),
   }),
   description: z.string().max(500, 'Description too long').optional(),
-  higherEducationContext: HigherEducationContextSchema.optional().refine(
-    (data, ctx) => {
-      // Require higher education context for 'superieur' level
-      if (ctx.parent.level === 'superieur' && !data) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Higher education context is required for superieur level',
-        });
-        return false;
-      }
-      return true;
-    }
-  ),
+  higherEducationContext: HigherEducationContextSchema.optional(),
   credits: z.number().int().min(0).max(30).optional(),
   volume: z.number().int().min(0).max(500).optional(),
   prerequisites: z.array(z.string().min(1)).default([]),
   syllabus: z.string().max(2000, 'Syllabus too long').optional(),
   learningObjectives: z.array(z.string().min(1)).default([]),
+}).superRefine((data, ctx) => {
+  // Require higher education context for 'superieur' level
+  if (data.level === 'superieur' && !data.higherEducationContext) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Higher education context is required for superieur level',
+      path: ['higherEducationContext'],
+    });
+  }
 });
 
 export const UpdateSubjectSchema = z.object({

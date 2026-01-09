@@ -71,7 +71,7 @@ export function errorResponse(
       error: {
         code,
         message,
-        ...(details && { details }),
+        ...(details ? { details } : {}),
       },
     },
     { status }
@@ -82,9 +82,9 @@ export function errorResponse(
  * Handle Zod validation errors
  */
 export function validationErrorResponse(
-  error: ZodError
+  error: ZodError<any>
 ): NextResponse<ApiErrorResponse> {
-  const formattedErrors = error.errors.map((err) => ({
+  const formattedErrors = (error as any).errors.map((err: any) => ({
     field: err.path.join('.'),
     message: err.message,
   }));

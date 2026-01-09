@@ -11,19 +11,21 @@ import { Types } from 'mongoose';
 // ENUMS & CONSTANTS
 // ============================================================================
 
+import type { AIModel } from './ai';
+
 export type ContentType = 'course' | 'td' | 'control';
 export type EducationLevel = 'lycee' | 'superieur';
-export type AIModel = 'gemini' | 'claude';
+// Remove AIModel definition
 export type ContentStatus = 'draft' | 'comparing' | 'published' | 'rejected';
 
 // Higher education specific types
 export type UniversityType = 'university' | 'grande-ecole' | 'iut' | 'bts' | 'prepa' | 'other';
 export type AcademicSemester = 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7' | 'S8' | 'S9' | 'S10';
-export type SubjectCategory = 
-  | 'mathematics' 
-  | 'physics' 
-  | 'chemistry' 
-  | 'biology' 
+export type SubjectCategory =
+  | 'mathematics'
+  | 'physics'
+  | 'chemistry'
+  | 'biology'
   | 'computer-science'
   | 'engineering'
   | 'literature'
@@ -67,19 +69,19 @@ export interface ISubject {
   level: EducationLevel;
   category: SubjectCategory;
   description?: string;
-  
+
   // Higher education specific fields
   higherEducationContext?: IHigherEducationContext;
-  
+
   // Academic organization
   credits?: number; // ECTS credits for higher education
   volume?: number; // Total course hours
   prerequisites?: string[]; // Prerequisites as strings
-  
+
   // Content organization
   syllabus?: string; // Course syllabus/program
   learningObjectives?: string[]; // Learning objectives
-  
+
   createdAt: Date;
   updatedAt: Date;
 }

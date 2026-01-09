@@ -54,7 +54,7 @@ export class NotionService {
           rich_text: [
             {
               text: {
-                content: content.subject?.name || 'Unknown Subject',
+                content: (content.subject as any)?.name || 'Unknown Subject',
               },
             },
           ],
@@ -85,13 +85,13 @@ export class NotionService {
           database_id: this.databaseId,
         },
         properties,
-        children,
+        children: children as any,
       });
 
       return response.id;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to publish to Notion:', error);
-      throw new Error(`Notion publish failed: ${error.message}`);
+      throw new Error(`Notion publish failed: ${(error as Error).message}`);
     }
   }
 
@@ -100,7 +100,7 @@ export class NotionService {
    * Get display name for content type
    */
   private getTypeDisplayName(type: string): string {
-    const typeMap = {
+    const typeMap: Record<string, string> = {
       course: 'Cours',
       td: 'TD',
       control: 'Contrôle',
@@ -112,7 +112,7 @@ export class NotionService {
    * Get display name for AI model
    */
   private getModelDisplayName(model: string): string {
-    const modelMap = {
+    const modelMap: Record<string, string> = {
       gemini: 'Gemini 2.5 Pro',
       claude: 'Claude 3.5 Sonnet',
     };

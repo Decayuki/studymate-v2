@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { 
-  ICreateSubject, 
-  IUpdateSubject, 
-  EducationLevel, 
-  SubjectCategory, 
-  UniversityType, 
-  AcademicSemester 
+import type {
+  ICreateSubject,
+  IUpdateSubject,
+  EducationLevel,
+  SubjectCategory,
+  UniversityType,
+  AcademicSemester
 } from '@studymate/shared';
 
 interface EnhancedSubjectFormProps {
@@ -105,24 +105,24 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
   // Array field helpers
   const addPrerequisite = () => {
     if (newPrerequisite.trim()) {
-      updateField('prerequisites', [...formData.prerequisites, newPrerequisite.trim()]);
+      updateField('prerequisites', [...(formData.prerequisites || []), newPrerequisite.trim()]);
       setNewPrerequisite('');
     }
   };
 
   const removePrerequisite = (index: number) => {
-    updateField('prerequisites', formData.prerequisites.filter((_, i) => i !== index));
+    updateField('prerequisites', (formData.prerequisites || []).filter((_, i) => i !== index));
   };
 
   const addLearningObjective = () => {
     if (newLearningObjective.trim()) {
-      updateField('learningObjectives', [...formData.learningObjectives, newLearningObjective.trim()]);
+      updateField('learningObjectives', [...(formData.learningObjectives || []), newLearningObjective.trim()]);
       setNewLearningObjective('');
     }
   };
 
   const removeLearningObjective = (index: number) => {
-    updateField('learningObjectives', formData.learningObjectives.filter((_, i) => i !== index));
+    updateField('learningObjectives', (formData.learningObjectives || []).filter((_, i) => i !== index));
   };
 
   // Form submission
@@ -176,7 +176,7 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
         {/* Basic Information */}
         <div className="bg-white rounded-lg border p-6">
           <h3 className="text-lg font-semibold mb-4">Informations de base</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -217,11 +217,10 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
                     key={category.value}
                     type="button"
                     onClick={() => updateField('category', category.value)}
-                    className={`p-3 text-sm border rounded-lg text-left transition-colors ${
-                      formData.category === category.value
-                        ? 'bg-blue-50 border-blue-200 text-blue-800'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
+                    className={`p-3 text-sm border rounded-lg text-left transition-colors ${formData.category === category.value
+                      ? 'bg-blue-50 border-blue-200 text-blue-800'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
                   >
                     <div className="text-lg mb-1">{category.icon}</div>
                     <div className="font-medium">{category.label}</div>
@@ -249,7 +248,7 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
         {formData.level === 'superieur' && (
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold mb-4">Contexte Enseignement Supérieur</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -354,7 +353,7 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
         {/* Academic Details */}
         <div className="bg-white rounded-lg border p-6">
           <h3 className="text-lg font-semibold mb-4">Détails académiques</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {formData.level === 'superieur' && (
               <div>
@@ -410,9 +409,9 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
                     Ajouter
                   </button>
                 </div>
-                {formData.prerequisites.length > 0 && (
+                {(formData.prerequisites || []).length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {formData.prerequisites.map((prereq, index) => (
+                    {(formData.prerequisites || []).map((prereq, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-800 rounded-md text-sm"
@@ -437,7 +436,7 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
         {/* Course Content */}
         <div className="bg-white rounded-lg border p-6">
           <h3 className="text-lg font-semibold mb-4">Contenu pédagogique</h3>
-          
+
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -474,9 +473,9 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
                     Ajouter
                   </button>
                 </div>
-                {formData.learningObjectives.length > 0 && (
+                {(formData.learningObjectives || []).length > 0 && (
                   <div className="space-y-2">
-                    {formData.learningObjectives.map((objective, index) => (
+                    {(formData.learningObjectives || []).map((objective, index) => (
                       <div
                         key={index}
                         className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md"
@@ -508,7 +507,7 @@ export function EnhancedSubjectForm({ initialData, mode, onSubmit }: EnhancedSub
           >
             Annuler
           </button>
-          
+
           <button
             type="submit"
             disabled={loading}

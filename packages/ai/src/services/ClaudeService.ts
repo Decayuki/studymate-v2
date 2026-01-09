@@ -6,9 +6,11 @@ import type {
   AIRetryConfig,
   AIRateLimitInfo,
   AIServiceError,
-  AIErrorType,
 } from '@studymate/shared';
-import { DEFAULT_RETRY_CONFIG } from '@studymate/shared';
+import {
+  AIErrorType,
+  DEFAULT_RETRY_CONFIG,
+} from '@studymate/shared';
 
 /**
  * ClaudeService Implementation
@@ -194,34 +196,34 @@ export class ClaudeService extends AIService {
     if (error instanceof Anthropic.APIError) {
       // Rate limit error
       if (error.status === 429) {
-        return 'RATE_LIMIT';
+        return AIErrorType.RATE_LIMIT;
       }
 
       // Authentication error
       if (error.status === 401 || error.status === 403) {
-        return 'AUTHENTICATION_ERROR';
+        return AIErrorType.AUTHENTICATION_ERROR;
       }
 
       // Invalid request
       if (error.status === 400) {
-        return 'INVALID_REQUEST';
+        return AIErrorType.INVALID_REQUEST;
       }
 
       // Overloaded (temporarily unavailable)
       if (error.status === 529) {
-        return 'RATE_LIMIT';
+        return AIErrorType.RATE_LIMIT;
       }
     }
 
     if (error instanceof Anthropic.APIConnectionError) {
-      return 'NETWORK_ERROR';
+      return AIErrorType.NETWORK_ERROR;
     }
 
     if (error instanceof Anthropic.APIConnectionTimeoutError) {
-      return 'TIMEOUT';
+      return AIErrorType.TIMEOUT;
     }
 
-    return 'UNKNOWN_ERROR';
+    return AIErrorType.UNKNOWN_ERROR;
   }
 
   /**
@@ -231,7 +233,7 @@ export class ClaudeService extends AIService {
     const errorType = this.getErrorType(error);
     const message =
       error instanceof Error ? error.message : 'Unknown Claude error';
-    const retryable = ['RATE_LIMIT', 'TIMEOUT', 'NETWORK_ERROR'].includes(
+    const retryable = [AIErrorType.RATE_LIMIT, AIErrorType.TIMEOUT, AIErrorType.NETWORK_ERROR].includes(
       errorType
     );
 

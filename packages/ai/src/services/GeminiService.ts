@@ -6,9 +6,11 @@ import type {
   AIRetryConfig,
   AIRateLimitInfo,
   AIServiceError,
-  AIErrorType,
 } from '@studymate/shared';
-import { DEFAULT_RETRY_CONFIG } from '@studymate/shared';
+import {
+  AIErrorType,
+  DEFAULT_RETRY_CONFIG,
+} from '@studymate/shared';
 
 /**
  * GeminiService Implementation
@@ -186,27 +188,27 @@ export class GeminiService extends AIService {
 
       // Check status code
       if (err.status === 429 || err.message?.includes('quota')) {
-        return 'RATE_LIMIT';
+        return AIErrorType.RATE_LIMIT;
       }
 
       if (err.status === 401 || err.status === 403) {
-        return 'AUTHENTICATION_ERROR';
+        return AIErrorType.AUTHENTICATION_ERROR;
       }
 
       if (err.status === 400) {
-        return 'INVALID_REQUEST';
+        return AIErrorType.INVALID_REQUEST;
       }
 
       if (err.message?.includes('timeout')) {
-        return 'TIMEOUT';
+        return AIErrorType.TIMEOUT;
       }
 
       if (err.message?.includes('network')) {
-        return 'NETWORK_ERROR';
+        return AIErrorType.NETWORK_ERROR;
       }
     }
 
-    return 'UNKNOWN_ERROR';
+    return AIErrorType.UNKNOWN_ERROR;
   }
 
   /**
@@ -217,9 +219,9 @@ export class GeminiService extends AIService {
     const message =
       error instanceof Error ? error.message : 'Unknown Gemini error';
     const retryable = [
-      'RATE_LIMIT',
-      'TIMEOUT',
-      'NETWORK_ERROR',
+      AIErrorType.RATE_LIMIT,
+      AIErrorType.TIMEOUT,
+      AIErrorType.NETWORK_ERROR,
     ].includes(errorType);
 
     const aiError = new Error(message) as AIServiceError;

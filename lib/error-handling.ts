@@ -14,6 +14,10 @@ export interface ErrorContext {
   requestId?: string;
   endpoint?: string;
   userAgent?: string;
+  field?: string;
+  resource?: string;
+  resourceId?: string;
+  operation?: string;
   timestamp: Date;
   additionalData?: Record<string, any>;
 }
@@ -35,34 +39,34 @@ export enum ErrorCodes {
   MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
   INVALID_FORMAT = 'INVALID_FORMAT',
   INVALID_OBJECT_ID = 'INVALID_OBJECT_ID',
-  
+
   // Authentication & Authorization
   UNAUTHORIZED = 'UNAUTHORIZED',
   FORBIDDEN = 'FORBIDDEN',
   TOKEN_EXPIRED = 'TOKEN_EXPIRED',
-  
+
   // Database Errors
   DATABASE_CONNECTION_ERROR = 'DATABASE_CONNECTION_ERROR',
   DOCUMENT_NOT_FOUND = 'DOCUMENT_NOT_FOUND',
   DUPLICATE_ENTRY = 'DUPLICATE_ENTRY',
   DATABASE_QUERY_ERROR = 'DATABASE_QUERY_ERROR',
-  
+
   // AI Service Errors
   AI_SERVICE_UNAVAILABLE = 'AI_SERVICE_UNAVAILABLE',
   AI_QUOTA_EXCEEDED = 'AI_QUOTA_EXCEEDED',
   AI_GENERATION_TIMEOUT = 'AI_GENERATION_TIMEOUT',
   AI_CONTENT_FILTERED = 'AI_CONTENT_FILTERED',
-  
+
   // External Services
   NOTION_API_ERROR = 'NOTION_API_ERROR',
   EXTERNAL_SERVICE_ERROR = 'EXTERNAL_SERVICE_ERROR',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
-  
+
   // Internal Errors
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
   CONFIGURATION_ERROR = 'CONFIGURATION_ERROR',
   FEATURE_NOT_IMPLEMENTED = 'FEATURE_NOT_IMPLEMENTED',
-  
+
   // Business Logic Errors
   INVALID_OPERATION = 'INVALID_OPERATION',
   RESOURCE_CONFLICT = 'RESOURCE_CONFLICT',
@@ -87,7 +91,7 @@ export class AppError extends Error {
     context: Partial<ErrorContext> = {}
   ) {
     super(message);
-    
+
     this.name = this.constructor.name;
     this.code = code;
     this.statusCode = statusCode;
@@ -127,7 +131,7 @@ export class NotFoundError extends AppError {
 
 export class AIServiceError extends AppError {
   constructor(
-    message: string, 
+    message: string,
     code: string = ErrorCodes.AI_SERVICE_UNAVAILABLE,
     context?: Partial<ErrorContext>
   ) {
@@ -158,7 +162,7 @@ class ErrorLogger {
   log(error: Error | AppError, level: 'error' | 'warn' | 'info' = 'error', context: Partial<ErrorContext> = {}) {
     const id = this.generateId();
     const isAppError = error instanceof AppError;
-    
+
     const logEntry: ErrorLogEntry = {
       id,
       level,
@@ -175,7 +179,7 @@ class ErrorLogger {
     };
 
     this.logs.unshift(logEntry);
-    
+
     // Keep only the most recent logs
     if (this.logs.length > this.maxLogs) {
       this.logs = this.logs.slice(0, this.maxLogs);
@@ -247,7 +251,7 @@ export class ErrorHandler {
   static handle(error: Error | AppError, context: Partial<ErrorContext> = {}): NextResponse {
     const isAppError = error instanceof AppError;
     const isOperational = isAppError ? error.isOperational : false;
-    
+
     // Log the error
     const logLevel = this.getLogLevel(error);
     const logId = errorLogger.log(error, logLevel, context);
@@ -341,9 +345,9 @@ export class ValidationHelper {
   }
 
   static validateStringLength(
-    value: string, 
-    fieldName: string, 
-    min?: number, 
+    value: string,
+    fieldName: string,
+    min?: number,
     max?: number
   ): void {
     if (min !== undefined && value.length < min) {
@@ -361,8 +365,8 @@ export class ValidationHelper {
   }
 
   static validateEnum<T>(
-    value: string, 
-    validValues: T[], 
+    value: string,
+    validValues: T[],
     fieldName: string
   ): void {
     if (!validValues.includes(value as T)) {
@@ -381,9 +385,9 @@ export class ValidationHelper {
   }
 
   static validateNumber(
-    value: number, 
-    fieldName: string, 
-    min?: number, 
+    value: number,
+    fieldName: string,
+    min?: number,
     max?: number
   ): void {
     if (isNaN(value)) {
@@ -415,7 +419,7 @@ export class RetryHelper {
     delayMs: number = 1000,
     backoffMultiplier: number = 2
   ): Promise<T> {
-    let lastError: Error;
+    let lastError: Error = new Error('Unknown error');
     let delay = delayMs;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -423,7 +427,7 @@ export class RetryHelper {
         return await operation();
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt === maxAttempts) {
           break;
         }
@@ -444,7 +448,7 @@ export class RetryHelper {
       ErrorCodes.INTERNAL_SERVER_ERROR,
       500,
       false,
-      { originalError: lastError.message, maxAttempts }
+      { additionalData: { originalError: lastError.message, maxAttempts } }
     );
   }
 
@@ -465,7 +469,7 @@ export class CircuitBreaker {
   constructor(
     private maxFailures: number = 5,
     private timeoutMs: number = 60000 // 1 minute
-  ) {}
+  ) { }
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {
     if (this.state === 'OPEN') {
@@ -491,8 +495,8 @@ export class CircuitBreaker {
   }
 
   private shouldAttemptReset(): boolean {
-    return this.lastFailureTime && 
-           (Date.now() - this.lastFailureTime.getTime()) >= this.timeoutMs;
+    return !!this.lastFailureTime &&
+      (Date.now() - this.lastFailureTime.getTime()) >= this.timeoutMs;
   }
 
   private onSuccess(): void {
@@ -524,10 +528,10 @@ export class PerformanceMonitor {
   static startMeasurement(operationName: string): string {
     const measurementId = `${operationName}_${Date.now()}_${Math.random()}`;
     const startTime = performance.now();
-    
+
     // Store start time temporarily
     this.measurements.set(measurementId, [startTime]);
-    
+
     return measurementId;
   }
 
@@ -537,10 +541,10 @@ export class PerformanceMonitor {
 
     const endTime = performance.now();
     const duration = endTime - measurement[0];
-    
+
     // Store the duration
     measurement[1] = duration;
-    
+
     // Log slow operations
     if (duration > 5000) { // 5 seconds
       console.warn(`Slow operation detected: ${measurementId} took ${duration.toFixed(2)}ms`);
@@ -551,7 +555,7 @@ export class PerformanceMonitor {
 
   static async measure<T>(operationName: string, operation: () => Promise<T>): Promise<T> {
     const measurementId = this.startMeasurement(operationName);
-    
+
     try {
       const result = await operation();
       this.endMeasurement(measurementId);

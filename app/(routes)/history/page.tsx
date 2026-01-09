@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ISubject, ContentType, ContentStatus, AIModel, EducationLevel } from '@studymate/shared';
 
@@ -64,11 +64,12 @@ interface ApiResponse {
   filters: any;
 }
 
+export const dynamic = 'force-dynamic';
 /**
  * Content History Page
  * Complete view of all generated content with advanced filtering
  */
-export default function HistoryPage() {
+function HistoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -108,7 +109,7 @@ export default function HistoryPage() {
         const response = await fetch('/api/subjects');
         if (!response.ok) throw new Error('Failed to load subjects');
         const data = await response.json();
-        setSubjects(data.data || []);
+        setSubjects(Array.isArray(data.data) ? data.data : []);
       } catch (error) {
         console.error('Error loading subjects:', error);
       }
@@ -123,7 +124,7 @@ export default function HistoryPage() {
 
     try {
       const queryParams = new URLSearchParams();
-      
+
       // Add non-empty filters to query
       if (filters.level) queryParams.set('level', filters.level);
       if (filters.subjects.length > 0) queryParams.set('subjects', filters.subjects.join(','));
@@ -135,19 +136,20 @@ export default function HistoryPage() {
       if (filters.search) queryParams.set('search', filters.search);
       queryParams.set('sortBy', filters.sortBy);
       queryParams.set('sortOrder', filters.sortOrder);
-      
+
       // Pagination
       const limit = 20;
       queryParams.set('limit', limit.toString());
       queryParams.set('offset', ((page - 1) * limit).toString());
 
       const response = await fetch(`/api/contents/all?${queryParams}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to load content');
       }
 
-      const data: ApiResponse = await response.json();
+      const response_data = await response.json();
+      const data: ApiResponse = response_data.data || { contents: [], pagination: { total: 0, offset: 0, limit: 20, page: 1, totalPages: 0, hasNext: false, hasPrevious: false }, filters: {} };
       setData(data);
       setCurrentPage(page);
 
@@ -175,8 +177,8 @@ export default function HistoryPage() {
 
   // Toggle array filter (for multi-select)
   const toggleArrayFilter = <K extends keyof Filters>(
-    key: K, 
-    value: string, 
+    key: K,
+    value: string,
     currentArray: string[]
   ) => {
     const newArray = currentArray.includes(value)
@@ -224,7 +226,7 @@ export default function HistoryPage() {
   };
 
   const selectAllVisible = () => {
-    if (!data) return;
+    if (!data || !Array.isArray(data.contents)) return;
     const allIds = data.contents.map(content => content._id);
     setSelectedItems(allIds);
   };
@@ -270,7 +272,7 @@ export default function HistoryPage() {
       // Show results
       const { summary, errors } = result.data;
       let message = `Opération terminée: ${summary.successful} réussi(es), ${summary.failed} échec(s)`;
-      
+
       if (errors.length > 0) {
         message += `\nErreurs: ${errors.map((e: any) => e.error).join(', ')}`;
       }
@@ -369,11 +371,10 @@ export default function HistoryPage() {
               </span>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2 text-sm font-medium rounded-md border transition-colors ${
-                  showFilters || activeFilterCount > 0
-                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
+                className={`px-4 py-2 text-sm font-medium rounded-md border transition-colors ${showFilters || activeFilterCount > 0
+                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
               >
                 Filtres {activeFilterCount > 0 && `(${activeFilterCount})`}
               </button>
@@ -402,25 +403,25 @@ export default function HistoryPage() {
 
                 <div className="space-y-6">
                   {/* Subject filter */}
-                  {subjects.length > 0 && (
+                  {Array.isArray(subjects) && subjects.length > 0 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Matières
                       </label>
                       <div className="space-y-2 max-h-32 overflow-y-auto">
-                        {subjects
+                        {Array.isArray(subjects) ? subjects
                           .filter(s => s.level === filters.level)
                           .map(subject => (
-                          <label key={subject._id.toString()} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={filters.subjects.includes(subject._id.toString())}
-                              onChange={() => toggleArrayFilter('subjects', subject._id.toString(), filters.subjects)}
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">{subject.name}</span>
-                          </label>
-                        ))}
+                            <label key={subject._id.toString()} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={filters.subjects.includes(subject._id.toString())}
+                                onChange={() => toggleArrayFilter('subjects', subject._id.toString(), filters.subjects)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <span className="ml-2 text-sm text-gray-700">{subject.name}</span>
+                            </label>
+                          )) : []}
                       </div>
                     </div>
                   )}
@@ -582,7 +583,7 @@ export default function HistoryPage() {
             <div className="bg-white rounded-lg border p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  {data && data.contents.length > 0 && (
+                  {data && Array.isArray(data.contents) && data.contents.length > 0 && (
                     <div className="flex items-center space-x-2">
                       <input
                         type="checkbox"
@@ -645,12 +646,12 @@ export default function HistoryPage() {
             )}
 
             {/* Empty state */}
-            {!loading && !error && data && data.contents.length === 0 && (
+            {!loading && !error && data && (!Array.isArray(data.contents) || data.contents.length === 0) && (
               <div className="bg-white rounded-lg border p-12 text-center">
                 <div className="text-4xl mb-4">📄</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun contenu trouvé</h3>
                 <p className="text-gray-600 mb-6">
-                  {activeFilterCount > 0 
+                  {activeFilterCount > 0
                     ? 'Essayez d\'ajuster vos filtres pour voir plus de résultats.'
                     : 'Vous n\'avez pas encore créé de contenu pour ce niveau.'
                   }
@@ -667,15 +668,14 @@ export default function HistoryPage() {
             )}
 
             {/* Content grid */}
-            {!loading && !error && data && data.contents.length > 0 && (
+            {!loading && !error && data && Array.isArray(data.contents) && data.contents.length > 0 && (
               <>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {data.contents.map((content) => (
-                    <div key={content._id} className={`bg-white rounded-lg border transition-shadow ${
-                      selectedItems.includes(content._id) 
-                        ? 'ring-2 ring-blue-500 shadow-md' 
-                        : 'hover:shadow-md'
-                    }`}>
+                    <div key={content._id} className={`bg-white rounded-lg border transition-shadow ${selectedItems.includes(content._id)
+                      ? 'ring-2 ring-blue-500 shadow-md'
+                      : 'hover:shadow-md'
+                      }`}>
                       <div className="p-6">
                         {/* Selection and Header */}
                         <div className="flex items-start justify-between mb-3">
@@ -752,24 +752,23 @@ export default function HistoryPage() {
                     >
                       Précédent
                     </button>
-                    
+
                     {Array.from({ length: Math.min(5, data.pagination.totalPages) }, (_, i) => {
                       const page = i + 1;
                       return (
                         <button
                           key={page}
                           onClick={() => loadContent(page)}
-                          className={`px-4 py-2 text-sm border rounded-md ${
-                            page === currentPage
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'border-gray-300 hover:bg-gray-50'
-                          }`}
+                          className={`px-4 py-2 text-sm border rounded-md ${page === currentPage
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 hover:bg-gray-50'
+                            }`}
                         >
                           {page}
                         </button>
                       );
                     })}
-                    
+
                     <button
                       onClick={() => loadContent(currentPage + 1)}
                       disabled={!data.pagination.hasNext}
@@ -785,5 +784,17 @@ export default function HistoryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <HistoryContent />
+    </Suspense>
   );
 }
