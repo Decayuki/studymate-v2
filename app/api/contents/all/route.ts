@@ -140,20 +140,20 @@ export async function GET(request: NextRequest) {
 
     const total = filteredContents.length;
 
+    // Apply pagination
+    const paginatedContents = filteredContents.slice(filters.offset, filters.offset + filters.limit);
+
     // Calculate pagination info
     const totalPages = Math.ceil(total / filters.limit);
     const currentPage = Math.floor(filters.offset / filters.limit) + 1;
 
     console.log('Content history query:', {
       filters,
-      resultsCount: contents.length,
+      resultsCount: paginatedContents.length,
       total,
       page: currentPage,
       totalPages,
     });
-
-    // Apply pagination
-    const paginatedContents = filteredContents.slice(filters.offset, filters.offset + filters.limit);
 
     return successResponse({
       contents: paginatedContents,
