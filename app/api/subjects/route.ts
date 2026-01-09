@@ -26,53 +26,83 @@ import {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Connect to database
-    await connectToDatabase();
-
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     const { page, limit, sortBy, sortOrder } = parsePaginationParams(searchParams);
 
-    // Parse filters
-    const filters: Record<string, unknown> = {};
-
     const level = searchParams.get('level');
     const search = searchParams.get('search');
 
-    // Validate filters with Zod
-    const validatedFilters = SubjectFiltersSchema.parse({
-      level: level || undefined,
-      name: search || undefined,
-    });
+    // Demo data for now (bypassing database)
+    const demoSubjects: ISubject[] = [
+      {
+        _id: '507f1f77bcf86cd799439011' as any,
+        name: 'Mathématiques Terminale S',
+        description: 'Mathématiques avancées pour Terminale Scientifique',
+        level: 'lycee',
+        category: 'mathematics',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        _id: '507f1f77bcf86cd799439012' as any,
+        name: 'Physique-Chimie 1ère',
+        description: 'Sciences physiques niveau première',
+        level: 'lycee',
+        category: 'physics',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        _id: '507f1f77bcf86cd799439013' as any,
+        name: 'Informatique L1',
+        description: 'Introduction à l\'informatique - Licence 1',
+        level: 'superieur',
+        category: 'computer-science',
+        credits: 6,
+        volume: 60,
+        higherEducationContext: {
+          institution: 'Université de Paris',
+          institutionType: 'university',
+          degree: 'Licence Informatique',
+          year: 1,
+          semester: 'S1',
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    ];
 
-    // Build query filters
-    if (validatedFilters.level) {
-      filters.level = validatedFilters.level;
+    // Filter by level
+    let filteredSubjects = demoSubjects;
+    if (level && level !== 'all') {
+      filteredSubjects = filteredSubjects.filter(s => s.level === level);
     }
 
-    if (validatedFilters.name) {
-      filters.name = { $regex: validatedFilters.name, $options: 'i' };
+    // Filter by search
+    if (search) {
+      filteredSubjects = filteredSubjects.filter(s => 
+        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        s.description?.toLowerCase().includes(search.toLowerCase())
+      );
     }
 
-    // Calculate pagination
-    const skip = (page - 1) * limit;
+    // Sort
+    if (sortBy === 'name') {
+      filteredSubjects.sort((a, b) => {
+        const comparison = a.name.localeCompare(b.name);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
+    }
 
-    // Execute query
-    const [subjects, total] = await Promise.all([
-      Subject.find(filters)
-        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean<ISubject[]>()
-        .exec(),
-      Subject.countDocuments(filters),
-    ]);
-
-    // Calculate pagination metadata
+    // Pagination
+    const total = filteredSubjects.length;
     const totalPages = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+    const paginatedSubjects = filteredSubjects.slice(skip, skip + limit);
 
     return successResponse({
-      data: subjects,
+      data: paginatedSubjects,
       pagination: {
         total,
         page,
