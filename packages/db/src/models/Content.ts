@@ -1,5 +1,12 @@
 import mongoose, { Schema, Model, Types } from 'mongoose';
-import type { IContent, IContentVersion } from '@studymate/shared';
+import type { 
+  IContent, 
+  IContentVersion, 
+  IContentSpecifications,
+  ICourseSpecifications,
+  ITDSpecifications,
+  IControlSpecifications
+} from '@studymate/shared';
 import {
   CONTENT_TYPES,
   AI_MODELS,
@@ -113,6 +120,52 @@ const ContentVersionSchema = new Schema<IContentVersion>(
 );
 
 // ============================================================================
+// SPECIFICATIONS SCHEMAS
+// ============================================================================
+
+/**
+ * Content Specifications Schema (type-specific data)
+ */
+const ContentSpecificationsSchema = new Schema(
+  {
+    // Base fields
+    chapterTitle: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Chapter title too long'],
+    },
+    constraints: {
+      type: String,
+      trim: true,
+      maxlength: [1000, 'Constraints too long'],
+    },
+
+    // TD-specific fields
+    linkedCourseId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Content',
+      index: true,
+    },
+    contextUsed: {
+      type: String,
+      maxlength: [100000, 'Context snapshot too large'],
+    },
+
+    // Control-specific fields
+    linkedCourseIds: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Content',
+    }],
+    duration: {
+      type: Number,
+      min: [1, 'Duration must be positive'],
+      max: [600, 'Duration too long (max 10 hours)'],
+    },
+  },
+  { _id: false }
+);
+
+// ============================================================================
 // MAIN SCHEMA
 // ============================================================================
 
@@ -160,6 +213,10 @@ const ContentSchema = new Schema<IContent>(
       sparse: true,
       index: true,
     },
+    specifications: {
+      type: ContentSpecificationsSchema,
+      default: {},
+    },
   },
   {
     timestamps: true,
@@ -175,6 +232,7 @@ const ContentSchema = new Schema<IContent>(
 ContentSchema.index({ subject: 1, type: 1 });
 ContentSchema.index({ subject: 1, createdAt: -1 });
 ContentSchema.index({ 'versions.status': 1 });
+ContentSchema.index({ 'specifications.linkedCourseId': 1 });
 
 // Text index for search
 ContentSchema.index({ title: 'text', 'versions.content': 'text' });

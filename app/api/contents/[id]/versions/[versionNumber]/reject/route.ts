@@ -78,7 +78,7 @@ export async function PATCH(
 
     // Use the model method to reject version
     try {
-      content.rejectVersion(versionNum, validatedData.reason);
+      (content as any).rejectVersion(versionNum, validatedData.reason);
       await content.save();
     } catch (error) {
       if (error instanceof Error) {

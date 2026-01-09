@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { connectToDatabase, Content } from '@studymate/db';
+import { NotionService, NotionRateLimiter } from '@studymate/notion';
 import {
   successResponse,
   notFoundResponse,
@@ -7,6 +8,33 @@ import {
   isValidObjectId,
   errorResponse,
 } from '@/lib/api-utils';
+
+// Initialize Notion service (singleton pattern)
+let notionService: NotionService | null = null;
+let rateLimiter: NotionRateLimiter | null = null;
+
+function getNotionService(): NotionService {
+  if (!notionService) {
+    const apiKey = process.env.NOTION_INTEGRATION_TOKEN;
+    const databaseId = process.env.NOTION_PARENT_PAGE_ID;
+    
+    if (!apiKey || !databaseId) {
+      throw new Error('NOTION_INTEGRATION_TOKEN and NOTION_PARENT_PAGE_ID must be set');
+    }
+    
+    notionService = new NotionService(apiKey, databaseId);
+    rateLimiter = new NotionRateLimiter();
+  }
+  
+  return notionService;
+}
+
+function getRateLimiter(): NotionRateLimiter {
+  if (!rateLimiter) {
+    getNotionService(); // This will initialize both
+  }
+  return rateLimiter!;
+}
 
 /**
  * PATCH /api/contents/[id]/versions/[versionNumber]/publish
@@ -64,20 +92,65 @@ export async function PATCH(
       );
     }
 
-    // Use the model method to publish version
+    // Check if content is already published to avoid duplicate Notion pages
+    const currentPublishedVersion = content.versions.find(v => v.status === 'published');
+    if (currentPublishedVersion && content.notionPageId) {
+      return errorResponse(
+        'CONFLICT',
+        'Content is already published to Notion. Unpublish first to publish a different version.',
+        409
+      );
+    }
+
+    // Publish to Notion first
+    let notionPageId: string;
     try {
-      content.publishVersion(versionNum);
+      const notion = getNotionService();
+      const limiter = getRateLimiter();
+      
+      // Use rate limiter to respect Notion API limits
+      notionPageId = await limiter.throttle(async () => {
+        return await notion.publishContent(content);
+      });
+    } catch (error) {
+      console.error('Failed to publish to Notion:', error);
+      return errorResponse(
+        'EXTERNAL_SERVICE_ERROR',
+        'Failed to publish content to Notion. Please try again.',
+        503
+      );
+    }
+
+    // Update content status in database
+    try {
+      (content as any).publishVersion(versionNum);
+      content.notionPageId = notionPageId;
       await content.save();
     } catch (error) {
+      // If DB update fails after Notion publish, we have an inconsistency
+      // Log this for manual cleanup
+      console.error('Failed to update content after Notion publish:', error, {
+        contentId: content._id,
+        notionPageId,
+      });
+      
       if (error instanceof Error) {
         return errorResponse('VALIDATION_ERROR', error.message, 400);
       }
       throw error;
     }
 
+    // Get Notion page URL for response
+    const notion = getNotionService();
+    const notionUrl = notion.getPageUrl(notionPageId);
+
     return successResponse(
-      content.toObject(),
-      `Version ${versionNum} published successfully`
+      {
+        ...content.toObject(),
+        notionPageId,
+        notionUrl,
+      },
+      `Version ${versionNum} published successfully to Notion`
     );
   } catch (error) {
     return handleApiError(error);

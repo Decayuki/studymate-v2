@@ -56,4 +56,103 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Mobile Optimizations */
+  /* Improve touch targets */
+  .touch-device button,
+  .touch-device input,
+  .touch-device select,
+  .touch-device textarea {
+    min-height: 44px; /* Apple's recommended minimum touch target */
+  }
+
+  /* Smooth scrolling for mobile */
+  .mobile-device {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent text size adjustment on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Better focus styles for accessibility */
+  *:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Hide focus outline for mouse users */
+  .no-touch *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Improve button touch response */
+  .touch-device button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Better input handling on mobile */
+  .mobile-device input,
+  .mobile-device textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Loading animation optimization for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-spin {
+      animation: none;
+    }
+    
+    .animate-pulse {
+      animation: none;
+    }
+    
+    * {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Text truncation utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+@layer utilities {
+  /* Mobile-specific utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
 }

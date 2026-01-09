@@ -16,9 +16,46 @@ export type EducationLevel = 'lycee' | 'superieur';
 export type AIModel = 'gemini' | 'claude';
 export type ContentStatus = 'draft' | 'comparing' | 'published' | 'rejected';
 
+// Higher education specific types
+export type UniversityType = 'university' | 'grande-ecole' | 'iut' | 'bts' | 'prepa' | 'other';
+export type AcademicSemester = 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7' | 'S8' | 'S9' | 'S10';
+export type SubjectCategory = 
+  | 'mathematics' 
+  | 'physics' 
+  | 'chemistry' 
+  | 'biology' 
+  | 'computer-science'
+  | 'engineering'
+  | 'literature'
+  | 'history'
+  | 'geography'
+  | 'philosophy'
+  | 'economics'
+  | 'business'
+  | 'law'
+  | 'medicine'
+  | 'psychology'
+  | 'sociology'
+  | 'languages'
+  | 'arts'
+  | 'other';
+
 // ============================================================================
 // SUBJECT
 // ============================================================================
+
+/**
+ * Higher Education Context
+ * Additional information for Enseignement Supérieur subjects
+ */
+export interface IHigherEducationContext {
+  institution: string; // University/School name
+  institutionType: UniversityType;
+  degree: string; // e.g., "Licence Informatique", "Master MIAGE"
+  year: number; // 1, 2, 3 for Licence; 1, 2 for Master
+  semester?: AcademicSemester;
+  specialization?: string; // e.g., "Data Science", "Cybersécurité"
+}
 
 /**
  * Subject (Matière)
@@ -28,7 +65,21 @@ export interface ISubject {
   _id: Types.ObjectId;
   name: string;
   level: EducationLevel;
+  category: SubjectCategory;
   description?: string;
+  
+  // Higher education specific fields
+  higherEducationContext?: IHigherEducationContext;
+  
+  // Academic organization
+  credits?: number; // ECTS credits for higher education
+  volume?: number; // Total course hours
+  prerequisites?: string[]; // Prerequisites as strings
+  
+  // Content organization
+  syllabus?: string; // Course syllabus/program
+  learningObjectives?: string[]; // Learning objectives
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,7 +90,14 @@ export interface ISubject {
 export interface ICreateSubject {
   name: string;
   level: EducationLevel;
+  category: SubjectCategory;
   description?: string;
+  higherEducationContext?: IHigherEducationContext;
+  credits?: number;
+  volume?: number;
+  prerequisites?: string[];
+  syllabus?: string;
+  learningObjectives?: string[];
 }
 
 /**
@@ -48,7 +106,14 @@ export interface ICreateSubject {
 export interface IUpdateSubject {
   name?: string;
   level?: EducationLevel;
+  category?: SubjectCategory;
   description?: string;
+  higherEducationContext?: IHigherEducationContext;
+  credits?: number;
+  volume?: number;
+  prerequisites?: string[];
+  syllabus?: string;
+  learningObjectives?: string[];
 }
 
 // ============================================================================
@@ -97,6 +162,46 @@ export interface ICreateContentVersion {
 }
 
 // ============================================================================
+// CONTENT SPECIFICATIONS (Type-specific data)
+// ============================================================================
+
+/**
+ * Base Content Specifications
+ */
+export interface IBaseContentSpecifications {
+  chapterTitle?: string; // For organizing content by chapters
+  constraints?: string; // Additional constraints/requirements
+}
+
+/**
+ * Course-specific specifications
+ */
+export interface ICourseSpecifications extends IBaseContentSpecifications {
+  // No additional fields for now
+}
+
+/**
+ * TD-specific specifications  
+ */
+export interface ITDSpecifications extends IBaseContentSpecifications {
+  linkedCourseId?: Types.ObjectId | string; // Reference to course content
+  contextUsed?: string; // Snapshot of course content used as context
+}
+
+/**
+ * Control-specific specifications
+ */
+export interface IControlSpecifications extends IBaseContentSpecifications {
+  linkedCourseIds?: (Types.ObjectId | string)[]; // Can reference multiple courses
+  duration?: number; // Duration in minutes
+}
+
+/**
+ * Union type for all specifications
+ */
+export type IContentSpecifications = ICourseSpecifications | ITDSpecifications | IControlSpecifications;
+
+// ============================================================================
 // CONTENT
 // ============================================================================
 
@@ -109,6 +214,7 @@ export interface IContent {
   subject: Types.ObjectId | ISubject; // Reference to Subject or populated
   type: ContentType;
   title: string;
+  specifications?: IContentSpecifications; // Type-specific data
   versions: IContentVersion[];
   currentVersion?: number; // Index of published/comparing version
   notionPageId?: string; // Notion page ID after publish
@@ -179,7 +285,13 @@ export interface ICreateContentTemplate {
  */
 export interface ISubjectFilters {
   level?: EducationLevel;
+  category?: SubjectCategory;
   name?: string | RegExp;
+  institution?: string;
+  institutionType?: UniversityType;
+  degree?: string;
+  year?: number;
+  semester?: AcademicSemester;
 }
 
 /**

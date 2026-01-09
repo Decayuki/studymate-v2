@@ -4,6 +4,9 @@ import {
   EDUCATION_LEVELS,
   AI_MODELS,
   CONTENT_STATUSES,
+  UNIVERSITY_TYPES,
+  ACADEMIC_SEMESTERS,
+  SUBJECT_CATEGORIES,
 } from '../constants';
 
 /**
@@ -19,6 +22,27 @@ import {
 // SUBJECT SCHEMAS
 // ============================================================================
 
+export const HigherEducationContextSchema = z.object({
+  institution: z
+    .string()
+    .min(1, 'Institution name is required')
+    .max(200, 'Institution name too long'),
+  institutionType: z.enum(UNIVERSITY_TYPES, {
+    errorMap: () => ({ message: 'Invalid institution type' }),
+  }),
+  degree: z
+    .string()
+    .min(1, 'Degree is required')
+    .max(150, 'Degree name too long'),
+  year: z
+    .number()
+    .int()
+    .min(1, 'Year must be at least 1')
+    .max(10, 'Year cannot exceed 10'),
+  semester: z.enum(ACADEMIC_SEMESTERS).optional(),
+  specialization: z.string().max(100, 'Specialization name too long').optional(),
+});
+
 export const CreateSubjectSchema = z.object({
   name: z
     .string()
@@ -27,13 +51,41 @@ export const CreateSubjectSchema = z.object({
   level: z.enum(EDUCATION_LEVELS, {
     errorMap: () => ({ message: 'Invalid education level' }),
   }),
+  category: z.enum(SUBJECT_CATEGORIES, {
+    errorMap: () => ({ message: 'Invalid subject category' }),
+  }),
   description: z.string().max(500, 'Description too long').optional(),
+  higherEducationContext: HigherEducationContextSchema.optional().refine(
+    (data, ctx) => {
+      // Require higher education context for 'superieur' level
+      if (ctx.parent.level === 'superieur' && !data) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Higher education context is required for superieur level',
+        });
+        return false;
+      }
+      return true;
+    }
+  ),
+  credits: z.number().int().min(0).max(30).optional(),
+  volume: z.number().int().min(0).max(500).optional(),
+  prerequisites: z.array(z.string().min(1)).default([]),
+  syllabus: z.string().max(2000, 'Syllabus too long').optional(),
+  learningObjectives: z.array(z.string().min(1)).default([]),
 });
 
 export const UpdateSubjectSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   level: z.enum(EDUCATION_LEVELS).optional(),
+  category: z.enum(SUBJECT_CATEGORIES).optional(),
   description: z.string().max(500).optional(),
+  higherEducationContext: HigherEducationContextSchema.optional(),
+  credits: z.number().int().min(0).max(30).optional(),
+  volume: z.number().int().min(0).max(500).optional(),
+  prerequisites: z.array(z.string().min(1)).optional(),
+  syllabus: z.string().max(2000).optional(),
+  learningObjectives: z.array(z.string().min(1)).optional(),
 });
 
 export const SubjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, {
@@ -129,7 +181,13 @@ export const CreateContentTemplateSchema = z.object({
 
 export const SubjectFiltersSchema = z.object({
   level: z.enum(EDUCATION_LEVELS).optional(),
+  category: z.enum(SUBJECT_CATEGORIES).optional(),
   name: z.string().optional(),
+  institution: z.string().optional(),
+  institutionType: z.enum(UNIVERSITY_TYPES).optional(),
+  degree: z.string().optional(),
+  year: z.number().int().min(1).max(10).optional(),
+  semester: z.enum(ACADEMIC_SEMESTERS).optional(),
 });
 
 export const ContentFiltersSchema = z.object({
