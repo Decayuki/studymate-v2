@@ -8,6 +8,49 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Enable standalone output for Docker
+  output: 'standalone',
+  
+  // Performance optimizations
+  compress: true,
+  
+  // Image optimization
+  images: {
+    domains: ['localhost'],
+    formats: ['image/webp', 'image/avif'],
+  },
+  
+  // Security headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+  
+  // Environment variables validation
+  env: {
+    CUSTOM_KEY: process.env.NODE_ENV,
+  },
 };
 
 module.exports = nextConfig;
