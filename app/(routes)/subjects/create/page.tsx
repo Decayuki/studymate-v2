@@ -1,6 +1,6 @@
 'use client';
 
-import { EnhancedSubjectForm } from '@/components/subjects/EnhancedSubjectForm';
+import { SimpleSubjectForm } from '@/components/subjects/SimpleSubjectForm';
 
 /**
  * Create Subject Page
@@ -36,7 +36,7 @@ export default function CreateSubjectPage() {
 
       {/* Form Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <EnhancedSubjectForm mode="create" />
+        <SimpleSubjectForm />
       </div>
 
       {/* Help Section */}
