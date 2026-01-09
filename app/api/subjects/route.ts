@@ -130,17 +130,21 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Connect to database
-    await connectToDatabase();
-
     // Parse and validate request body
     const body = await request.json();
     const validatedData = CreateSubjectSchema.parse(body);
 
-    // Create subject
-    const subject = await Subject.create(validatedData);
+    // For demo mode, return success with mock created subject
+    const mockSubject = {
+      _id: `507f1f77bcf86cd799${Date.now().toString().slice(-6)}`,
+      ...validatedData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-    return createdResponse(subject.toObject(), 'Subject created successfully');
+    console.log('Demo subject creation:', mockSubject);
+
+    return createdResponse(mockSubject, 'Subject created successfully (demo mode)');
   } catch (error) {
     return handleApiError(error);
   }
