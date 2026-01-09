@@ -122,8 +122,10 @@ export async function GET(request: NextRequest) {
       sortStage.title = filters.sortOrder === 'asc' ? 1 : -1;
     } else if (filters.sortBy === 'subject') {
       sortStage['subject.name'] = filters.sortOrder === 'asc' ? 1 : -1;
-    } else {
+    } else if (filters.sortBy) {
       sortStage[filters.sortBy] = filters.sortOrder === 'asc' ? 1 : -1;
+    } else {
+      sortStage.updatedAt = -1; // default sort
     }
     pipeline.push({ $sort: sortStage });
 
