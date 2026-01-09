@@ -72,23 +72,38 @@ export default function SubjectsPage() {
       if (state.filters.search) queryParams.set('search', state.filters.search);
       if (state.filters.institution) queryParams.set('institution', state.filters.institution);
 
-      const response = await fetch(`/api/subjects?${queryParams}`);
+      const response = await fetch(`/api/subjects?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!response.ok) {
-        throw new Error('Échec du chargement des matières');
+        console.warn('Subjects API returned:', response.status);
+        setState(prev => ({
+          ...prev,
+          subjects: [],
+          error: `API Error: ${response.status}. L'application peut fonctionner en mode dégradé.`,
+          loading: false,
+        }));
+        return;
       }
 
       const data = await response.json();
-      const subjects = Array.isArray(data.data) ? data.data : [];
+      const subjects = Array.isArray(data?.data) ? data.data : [];
       setState(prev => ({
         ...prev,
         subjects: subjects,
         loading: false,
       }));
     } catch (error) {
+      console.error('Error loading subjects:', error);
       setState(prev => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        subjects: [],
+        error: 'Connexion impossible aux APIs. L\'application peut fonctionner en mode dégradé.',
         loading: false,
       }));
     }

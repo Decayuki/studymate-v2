@@ -49,45 +49,86 @@ export default function HomePage() {
     try {
       let currentSubjects: ISubject[] = [];
 
-      // Charger les matières
-      const subjectsResponse = await fetch('/api/subjects');
-      if (subjectsResponse.ok) {
-        const subjectsData = await subjectsResponse.json();
-        currentSubjects = (subjectsData.data || []).filter(
-          (s: ISubject) => s.level === selectedLevel
-        );
-        setSubjects(currentSubjects);
+      // Charger les matières avec gestion d'erreur robuste
+      try {
+        const subjectsResponse = await fetch('/api/subjects', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (subjectsResponse.ok) {
+          const subjectsData = await subjectsResponse.json();
+          const allSubjects = Array.isArray(subjectsData?.data) ? subjectsData.data : [];
+          currentSubjects = allSubjects.filter(
+            (s: ISubject) => s.level === selectedLevel
+          );
+          setSubjects(currentSubjects);
+        } else {
+          console.warn('Subjects API returned:', subjectsResponse.status);
+          setSubjects([]);
+        }
+      } catch (subjectsError) {
+        console.error('Error loading subjects:', subjectsError);
+        setSubjects([]);
       }
 
-      // Charger les stats de contenu
-      const statsResponse = await fetch(`/api/contents/all?level=${selectedLevel}&limit=5`);
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        const contents = statsData.data?.contents || [];
-
-        // Calculer les statistiques
-        const contentStats: ContentStats = {
-          total: statsData.data?.pagination?.total || 0,
-          published: Array.isArray(contents) ? contents.filter((c: any) => c.primaryStatus === 'published').length : 0,
-          draft: Array.isArray(contents) ? contents.filter((c: any) => c.primaryStatus === 'draft').length : 0,
-          byType: {
-            course: Array.isArray(contents) ? contents.filter((c: any) => c.type === 'course').length : 0,
-            td: Array.isArray(contents) ? contents.filter((c: any) => c.type === 'td').length : 0,
-            control: Array.isArray(contents) ? contents.filter((c: any) => c.type === 'control').length : 0,
+      // Charger les stats de contenu avec gestion d'erreur robuste
+      try {
+        const statsResponse = await fetch(`/api/contents/all?level=${selectedLevel}&limit=5`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           }
-        };
+        });
+        
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          const contents = Array.isArray(statsData.data?.contents) ? statsData.data.contents : [];
 
+          // Calculer les statistiques
+          const contentStats: ContentStats = {
+            total: statsData.data?.pagination?.total || 0,
+            published: contents.filter((c: any) => c.primaryStatus === 'published').length,
+            draft: contents.filter((c: any) => c.primaryStatus === 'draft').length,
+            byType: {
+              course: contents.filter((c: any) => c.type === 'course').length,
+              td: contents.filter((c: any) => c.type === 'td').length,
+              control: contents.filter((c: any) => c.type === 'control').length,
+            }
+          };
+
+          setStats({
+            subjects: currentSubjects.length,
+            contents: contentStats,
+            recentActivity: contents.slice(0, 5).map((c: any) => ({
+              _id: c._id || '',
+              title: c.title || 'Sans titre',
+              type: c.type || 'course',
+              subject: c.subject?.name || 'Unknown',
+              updatedAt: c.updatedAt || new Date().toISOString(),
+              status: c.primaryStatus || 'draft',
+            }))
+          });
+        } else {
+          console.warn('Contents API returned:', statsResponse.status);
+          // Fallback avec données par défaut
+          setStats({
+            subjects: currentSubjects.length,
+            contents: { total: 0, published: 0, draft: 0, byType: { course: 0, td: 0, control: 0 } },
+            recentActivity: []
+          });
+        }
+      } catch (contentsError) {
+        console.error('Error loading contents:', contentsError);
+        // Fallback avec données par défaut
         setStats({
           subjects: currentSubjects.length,
-          contents: contentStats,
-          recentActivity: Array.isArray(contents) ? contents.slice(0, 5).map((c: any) => ({
-            _id: c._id,
-            title: c.title,
-            type: c.type,
-            subject: c.subject?.name || 'Unknown',
-            updatedAt: c.updatedAt,
-            status: c.primaryStatus,
-          })) : []
+          contents: { total: 0, published: 0, draft: 0, byType: { course: 0, td: 0, control: 0 } },
+          recentActivity: []
         });
       }
     } catch (error) {
@@ -197,6 +238,25 @@ export default function HomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Connection Status */}
+        {!loading && (!stats || stats.subjects === 0) && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+            <div className="flex items-center space-x-3">
+              <div className="text-2xl">⚠️</div>
+              <div>
+                <h3 className="text-lg font-medium text-yellow-900">Mode Déconnecté</h3>
+                <p className="text-yellow-700 text-sm mt-1">
+                  L'application fonctionne en mode dégradé. Certaines fonctionnalités nécessitent une base de données.
+                  Pour une expérience complète, configurez les variables d'environnement MongoDB et AI APIs.
+                </p>
+                <div className="mt-3 text-sm text-yellow-600">
+                  <p>Variables requises : MONGODB_URI, GEMINI_API_KEY</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Stats Cards */}
         {!loading && stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
