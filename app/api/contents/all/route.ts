@@ -107,12 +107,12 @@ export async function GET(request: NextRequest) {
 
     // Filter by types
     if (filters.types && filters.types.length > 0) {
-      filteredContents = filteredContents.filter(c => filters.types.includes(c.type));
+      filteredContents = filteredContents.filter(c => filters.types!.includes(c.type));
     }
 
     // Filter by statuses
     if (filters.statuses && filters.statuses.length > 0) {
-      filteredContents = filteredContents.filter(c => filters.statuses.includes(c.primaryStatus));
+      filteredContents = filteredContents.filter(c => filters.statuses!.includes(c.primaryStatus));
     }
 
     // Filter by search
