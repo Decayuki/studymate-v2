@@ -11,7 +11,6 @@ import {
   handleApiError,
   parsePaginationParams,
 } from '@/lib/api-utils';
-import { DemoStorage } from '@/lib/demo-storage';
 
 /**
  * GET /api/subjects
@@ -27,6 +26,9 @@ import { DemoStorage } from '@/lib/demo-storage';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Connect to database
+    await connectToDatabase();
+
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     const { page, limit, sortBy, sortOrder } = parsePaginationParams(searchParams);
@@ -34,41 +36,33 @@ export async function GET(request: NextRequest) {
     const level = searchParams.get('level');
     const search = searchParams.get('search');
 
-    // Get demo data from storage
-    const demoSubjects = DemoStorage.getSubjects();
-
-    // Filter by level
-    let filteredSubjects = demoSubjects;
+    // Build MongoDB query
+    const filter: any = {};
     if (level && level !== 'all') {
-      filteredSubjects = filteredSubjects.filter(s => s.level === level);
+      filter.level = level;
     }
-
-    // Filter by search
     if (search) {
-      filteredSubjects = filteredSubjects.filter(s => 
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.description?.toLowerCase().includes(search.toLowerCase())
-      );
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
     }
 
-    // Sort
-    if (sortBy === 'name') {
-      filteredSubjects.sort((a, b) => {
-        const comparison = a.name.localeCompare(b.name);
-        return sortOrder === 'asc' ? comparison : -comparison;
-      });
-    }
+    // Execute query with pagination
+    const totalCount = await Subject.countDocuments(filter);
+    const subjects = await Subject.find(filter)
+      .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
 
-    // Pagination
-    const total = filteredSubjects.length;
-    const totalPages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
-    const paginatedSubjects = filteredSubjects.slice(skip, skip + limit);
+    // Calculate pagination
+    const totalPages = Math.ceil(totalCount / limit);
 
     return successResponse({
-      data: paginatedSubjects,
+      data: subjects,
       pagination: {
-        total,
+        total: totalCount,
         page,
         limit,
         totalPages,
@@ -94,23 +88,17 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Connect to database
+    await connectToDatabase();
+
     // Parse and validate request body
     const body = await request.json();
     const validatedData = CreateSubjectSchema.parse(body);
 
-    // For demo mode, create and store the subject
-    const mockSubject: ISubject = {
-      _id: `507f1f77bcf86cd799${Date.now().toString().slice(-6)}` as any,
-      ...validatedData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Create subject in database
+    const subject = await Subject.create(validatedData);
 
-    // Add to demo storage
-    const createdSubject = DemoStorage.addSubject(mockSubject);
-    console.log('Demo subject created and stored:', createdSubject);
-
-    return createdResponse(createdSubject, 'Subject created successfully (demo mode)');
+    return createdResponse(subject.toObject(), 'Subject created successfully');
   } catch (error) {
     return handleApiError(error);
   }
