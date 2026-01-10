@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { TDCreationForm } from '@/components/forms/TDCreationForm';
 import { ControlCreationForm } from '@/components/forms/ControlCreationForm';
 import { QuickTDForm } from '@/components/forms/QuickTDForm';
+import { CourseCreationForm } from '@/components/forms/CourseCreationForm';
 import type { ISubject, ContentType } from '@studymate/shared';
 
 /**
@@ -130,13 +131,12 @@ export default function CreateContentPage() {
                 key={option.type}
                 onClick={() => !option.disabled && setSelectedType(option.type)}
                 disabled={option.disabled}
-                className={`p-6 rounded-lg border-2 text-left transition-all ${
-                  selectedType === option.type
-                    ? 'border-blue-500 bg-blue-50'
-                    : option.disabled
+                className={`p-6 rounded-lg border-2 text-left transition-all ${selectedType === option.type
+                  ? 'border-blue-500 bg-blue-50'
+                  : option.disabled
                     ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
                     : 'border-gray-200 hover:border-gray-300'
-                }`}
+                  }`}
               >
                 <div className="text-3xl mb-3">{option.icon}</div>
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -151,45 +151,52 @@ export default function CreateContentPage() {
         {/* Content Creation Form */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           {selectedType === 'course' && (
-            <div className="text-center text-gray-500 py-8">
-              <p>Création de cours - Fonctionnalité en développement</p>
-              <p className="text-sm mt-2">
-                Utilisez l'API directe ou attendez la prochaine version
-              </p>
-            </div>
+            <CourseCreationForm
+              subject={subject}
+              onSubmit={() => {
+                console.log('Course creation completed');
+              }}
+            />
           )}
 
           {selectedType === 'td' && (
             <div className="space-y-6">
-              {/* Quick TD Creation */}
-              <div className="p-6 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
+              {/* Quick TD Creation - priorité */}
+              <div className="p-6 border-2 border-solid border-blue-400 rounded-lg bg-blue-50">
                 <h3 className="text-lg font-semibold text-blue-900 mb-4">
-                  ⚡ Création rapide de TD
+                  ⚡ Création de TD - Recommandé
                 </h3>
                 <p className="text-blue-700 mb-4">
-                  Créez un TD rapidement avec un modèle de base que vous pourrez ensuite éditer.
+                  Créez un TD rapidement avec un modèle de base que vous pourrez ensuite éditer et personnaliser.
                 </p>
                 <QuickTDForm subject={subject} />
               </div>
-              
-              {/* Advanced TD Creation */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  📚 TD basé sur un cours existant
-                </h3>
-                <TDCreationForm 
-                  subject={subject} 
-                  onSubmit={() => {
-                    console.log('TD creation completed');
-                  }}
-                />
-              </div>
+
+              {/* Advanced TD Creation - moins proéminent */}
+              <details className="border border-gray-200 rounded-lg">
+                <summary className="p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-700 inline">
+                    📚 TD basé sur un cours existant (Avancé)
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Nécessite d'avoir créé un cours au préalable
+                  </p>
+                </summary>
+                <div className="p-4 border-t">
+                  <TDCreationForm
+                    subject={subject}
+                    onSubmit={() => {
+                      console.log('TD creation completed');
+                    }}
+                  />
+                </div>
+              </details>
             </div>
           )}
 
           {selectedType === 'control' && (
-            <ControlCreationForm 
-              subject={subject} 
+            <ControlCreationForm
+              subject={subject}
               onSubmit={() => {
                 console.log('Control creation completed');
               }}

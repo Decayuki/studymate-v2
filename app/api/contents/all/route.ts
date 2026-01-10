@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         {
           $lookup: {
             from: 'subjects',
-            localField: 'subjectId',
+            localField: 'subject',
             foreignField: '_id',
             as: 'subject'
           }
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
       // Filter by subject IDs
       if (filters.subjects && filters.subjects.length > 0) {
-        matchStage.subjectId = { $in: filters.subjects.map(id => id) };
+        matchStage.subject = { $in: filters.subjects.map(id => id) };
       }
 
       // Filter by types

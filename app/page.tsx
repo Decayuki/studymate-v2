@@ -61,7 +61,8 @@ export default function HomePage() {
         
         if (subjectsResponse.ok) {
           const subjectsData = await subjectsResponse.json();
-          const allSubjects = Array.isArray(subjectsData?.data) ? subjectsData.data : [];
+          // L'API retourne {success: true, data: {data: [...], pagination: {...}}}
+          const allSubjects = Array.isArray(subjectsData?.data?.data) ? subjectsData.data.data : [];
           currentSubjects = allSubjects.filter(
             (s: ISubject) => s.level === selectedLevel
           );
@@ -87,31 +88,38 @@ export default function HomePage() {
         
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
-          const contents = Array.isArray(statsData.data?.contents) ? statsData.data.contents : [];
+          console.log('Stats API response:', statsData);
+          
+          // Protection renforcée contre les erreurs
+          const contents = (statsData?.data?.contents && Array.isArray(statsData.data.contents)) 
+            ? statsData.data.contents 
+            : [];
+          
+          console.log('Contents array:', contents);
 
-          // Calculer les statistiques
+          // Calculer les statistiques avec protection
           const contentStats: ContentStats = {
-            total: statsData.data?.pagination?.total || 0,
-            published: contents.filter((c: any) => c.primaryStatus === 'published').length,
-            draft: contents.filter((c: any) => c.primaryStatus === 'draft').length,
+            total: statsData?.data?.pagination?.total || 0,
+            published: contents.filter((c: any) => c && c.primaryStatus === 'published').length,
+            draft: contents.filter((c: any) => c && c.primaryStatus === 'draft').length,
             byType: {
-              course: contents.filter((c: any) => c.type === 'course').length,
-              td: contents.filter((c: any) => c.type === 'td').length,
-              control: contents.filter((c: any) => c.type === 'control').length,
+              course: contents.filter((c: any) => c && c.type === 'course').length,
+              td: contents.filter((c: any) => c && c.type === 'td').length,
+              control: contents.filter((c: any) => c && c.type === 'control').length,
             }
           };
 
           setStats({
             subjects: currentSubjects.length,
             contents: contentStats,
-            recentActivity: contents.slice(0, 5).map((c: any) => ({
-              _id: c._id || '',
-              title: c.title || 'Sans titre',
-              type: c.type || 'course',
-              subject: c.subject?.name || 'Unknown',
-              updatedAt: c.updatedAt || new Date().toISOString(),
-              status: c.primaryStatus || 'draft',
-            }))
+            recentActivity: Array.isArray(contents) ? contents.slice(0, 5).map((c: any) => ({
+              _id: c?._id || '',
+              title: c?.title || 'Sans titre',
+              type: c?.type || 'course',
+              subject: c?.subject?.name || 'Unknown',
+              updatedAt: c?.updatedAt || new Date().toISOString(),
+              status: c?.primaryStatus || 'draft',
+            })) : []
           });
         } else {
           console.warn('Contents API returned:', statsResponse.status);
@@ -148,10 +156,10 @@ export default function HomePage() {
     },
     {
       title: 'Créer un TD',
-      description: 'TD basé sur un cours existant',
+      description: 'Créer un TD pour n\'importe quelle matière',
       icon: '✏️',
       color: 'green',
-      action: () => router.push('/subjects')
+      action: () => router.push('/td/create')
     },
     {
       title: 'Créer un Contrôle',

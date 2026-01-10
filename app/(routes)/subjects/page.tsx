@@ -92,7 +92,8 @@ export default function SubjectsPage() {
       }
 
       const data = await response.json();
-      const subjects = Array.isArray(data?.data) ? data.data : [];
+      // L'API retourne {success: true, data: {data: [...], pagination: {...}}}
+      const subjects = Array.isArray(data?.data?.data) ? data.data.data : [];
       setState(prev => ({
         ...prev,
         subjects: subjects,

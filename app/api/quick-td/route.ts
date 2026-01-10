@@ -25,14 +25,16 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create TD content with minimal required fields
+    // Create TD content with all required fields per Content schema
     const contentData = {
+      subject: new Types.ObjectId(body.subjectId), // Use 'subject' not 'subjectId'
       title: body.title,
       type: 'td',
-      subjectId: new Types.ObjectId(body.subjectId),
-      primaryStatus: 'draft',
       versions: [{
         versionNumber: 1,
+        status: 'draft',
+        aiModel: 'gemini', // Use valid AI model instead of 'manual'
+        prompt: `Créer un TD sur le thème : ${body.topic} pour la matière ${subject.name}`,
         content: `# ${body.title}
 
 ## Objectif
@@ -48,19 +50,16 @@ TD sur le thème : ${body.topic}
 
 ---
 *Ce contenu est un modèle de base. Vous pouvez le modifier dans l'éditeur.*`,
-        status: 'draft',
-        aiModel: 'manual',
-        aiGeneration: {
+        metadata: { // Add required metadata
           tokensUsed: 0,
           durationMs: 0,
-          model: 'manual',
-          modelVersion: '1.0',
+          model: 'gemini',
+          modelVersion: '2.5-pro',
           estimatedCost: 0,
           costCurrency: 'USD',
         },
         createdAt: new Date(),
       }],
-      modelsUsed: ['manual'],
       specifications: {
         linkedCourseId: null,
       },
