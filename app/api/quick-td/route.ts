@@ -80,8 +80,13 @@ TD sur le thème : ${body.topic}
     
   } catch (error) {
     console.error('Quick TD creation error:', error);
+    console.error('Error details:', error instanceof Error ? error.message : error);
     return NextResponse.json(
-      { success: false, error: 'Erreur lors de la création du TD' },
+      { 
+        success: false, 
+        error: 'Erreur lors de la création du TD',
+        debug: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
