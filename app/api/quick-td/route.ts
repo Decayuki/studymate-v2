@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase, Content, Subject } from '@studymate/db';
+import { Types } from 'mongoose';
 
 interface QuickTDRequest {
   subjectId: string;
@@ -24,11 +25,11 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create TD content without AI generation (for speed)
-    const content = await Content.create({
+    // Create TD content with minimal required fields
+    const contentData = {
       title: body.title,
       type: 'td',
-      subjectId: body.subjectId,
+      subjectId: new Types.ObjectId(body.subjectId),
       primaryStatus: 'draft',
       versions: [{
         versionNumber: 1,
@@ -49,13 +50,23 @@ TD sur le thème : ${body.topic}
 *Ce contenu est un modèle de base. Vous pouvez le modifier dans l'éditeur.*`,
         status: 'draft',
         aiModel: 'manual',
-        tokensUsed: 0,
+        aiGeneration: {
+          tokensUsed: 0,
+          durationMs: 0,
+          model: 'manual',
+          modelVersion: '1.0',
+          estimatedCost: 0,
+          costCurrency: 'USD',
+        },
         createdAt: new Date(),
       }],
       modelsUsed: ['manual'],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+      specifications: {
+        linkedCourseId: null,
+      },
+    };
+
+    const content = await Content.create(contentData);
     
     return NextResponse.json({
       success: true,
