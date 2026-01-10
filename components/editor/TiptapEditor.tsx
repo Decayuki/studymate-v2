@@ -10,6 +10,7 @@ import Image from '@tiptap/extension-image';
 import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
 import CharacterCount from '@tiptap/extension-character-count';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
@@ -75,6 +76,7 @@ export function TiptapEditor({
         resizable: true,
       }),
       TableRow,
+      TableHeader,
       TableCell,
       CharacterCount,
     ],
