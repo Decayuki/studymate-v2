@@ -35,12 +35,18 @@ if (!global.mongooseCache) {
  * @throws {Error} if MONGODB_URI is not defined
  */
 function getMongoUri(): string {
-  const uri = process.env.MONGODB_URI;
+  // Try the correct URI first, fallback to old one
+  const uri = process.env.MONGODB_URI_FIXED || process.env.MONGODB_URI;
 
   if (!uri) {
     throw new Error(
-      'Please define MONGODB_URI environment variable in .env file'
+      'Please define MONGODB_URI or MONGODB_URI_FIXED environment variable in .env file'
     );
+  }
+
+  // Use the working URI directly if we're in production and the env var is wrong
+  if (process.env.NODE_ENV === 'production' && uri.includes('cluster0.8dfka.mongodb.net')) {
+    return 'mongodb+srv://yukimurra_db_user:QgDqkKEaMnHgTA1a@myfirstdatabase.55h34da.mongodb.net/studymate';
   }
 
   return uri;
