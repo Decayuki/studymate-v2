@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { TDCreationForm } from '@/components/forms/TDCreationForm';
 import { ControlCreationForm } from '@/components/forms/ControlCreationForm';
+import { QuickTDForm } from '@/components/forms/QuickTDForm';
 import type { ISubject, ContentType } from '@studymate/shared';
 
 /**
@@ -159,13 +160,31 @@ export default function CreateContentPage() {
           )}
 
           {selectedType === 'td' && (
-            <TDCreationForm 
-              subject={subject} 
-              onSubmit={() => {
-                // Optional callback when TD is created successfully
-                console.log('TD creation completed');
-              }}
-            />
+            <div className="space-y-6">
+              {/* Quick TD Creation */}
+              <div className="p-6 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">
+                  ⚡ Création rapide de TD
+                </h3>
+                <p className="text-blue-700 mb-4">
+                  Créez un TD rapidement avec un modèle de base que vous pourrez ensuite éditer.
+                </p>
+                <QuickTDForm subject={subject} />
+              </div>
+              
+              {/* Advanced TD Creation */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  📚 TD basé sur un cours existant
+                </h3>
+                <TDCreationForm 
+                  subject={subject} 
+                  onSubmit={() => {
+                    console.log('TD creation completed');
+                  }}
+                />
+              </div>
+            </div>
           )}
 
           {selectedType === 'control' && (
